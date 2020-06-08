@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                     // loading profile image from local cache
                     loadProfile(uri.toString());
 
-                    imageUrl.setText((CharSequence) data.getData());
+                    imageUrl.setText(uri.toString());
 
 //                      uploadFile(uri, "My Image");
                 } catch (IOException e) {
