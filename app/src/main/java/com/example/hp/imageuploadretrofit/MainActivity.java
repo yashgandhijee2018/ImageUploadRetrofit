@@ -47,6 +47,8 @@ import com.mikhaellopez.circularimageview.CircularImageView;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -197,17 +199,10 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE) {
             if (resultCode == Activity.RESULT_OK) {
                 Uri uri = data.getParcelableExtra("path");
+
                 try {
-                    // You can update this bitmap to your server
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-
-                    // loading profile image from local cache
-                    loadProfile(uri.toString());
-
-                    imageUrl.setText(uri.toString());
-
-//                      uploadFile(uri, "My Image");
-                } catch (IOException e) {
+                    uploadFile(uri, "My Image");
+                } catch (URISyntaxException e) {
                     e.printStackTrace();
                 }
             }
@@ -215,28 +210,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void loadProfile(String url) {
 
+    private void uploadFile(Uri fileUri, String desc) throws URISyntaxException {
 
-        Glide.with(this).load(url)
-                .into(img_profile);
-        img_profile.setColorFilter(ContextCompat.getColor(this, android.R.color.transparent));
-    }
-
-    private void uploadFile(Uri fileUri, String desc) {
-
-        //creating a file
-        File file = new File(getRealPathFromURI(fileUri));
+        File file = new File(new URI(fileUri.toString()));
 
         //creating request body for file
-        RequestBody requestFile = RequestBody.create(MediaType.parse(getContentResolver().getType(fileUri)), file);
+        RequestBody requestFile = RequestBody.create(MediaType.parse(".jpg"), file);
         RequestBody descBody = RequestBody.create(MediaType.parse("text/plain"), desc);
 
         //The gson builder
         Gson gson = new GsonBuilder()
                 .setLenient()
                 .create();
-
 
         //creating retrofit object
         Retrofit retrofit = new Retrofit.Builder()
@@ -256,6 +242,10 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<ImageClass> call, Response<ImageClass> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(getApplicationContext(), "File Uploaded Successfully...", Toast.LENGTH_LONG).show();
+
+                    Glide.with(MainActivity.this).load(response.body().getProfilePicUrl())
+                            .into(img_profile);
+                    img_profile.setColorFilter(ContextCompat.getColor(MainActivity.this, android.R.color.transparent));
 
                     imageUrl.setText(response.body().getProfilePicUrl());
                     Log.i("response", response.body().toString());
